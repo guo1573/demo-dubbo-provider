@@ -25,6 +25,7 @@ public class ProductServiceImpl implements ProductService {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		System.out.println(pro.getProId());
 		return pro;
 	}
 	

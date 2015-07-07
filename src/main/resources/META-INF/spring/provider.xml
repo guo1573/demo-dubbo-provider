@@ -25,10 +25,12 @@
 
 	<bean id="productService" class="com.demo.provider.ProductServiceImpl">
 	</bean>
+	
+	<dubbo:provider ></dubbo:provider>
 
 	<dubbo:service interface="com.demo.inter.ProductService" protocol="dubbo"
-		ref="productService" timeout="10000" version="1.0.4" retries="2"
-		loadbalance="random" actives="2" />
+		ref="productService" timeout="10000" version="1.0.5" retries="2"
+		loadbalance="random" actives="1"/>
 		
 <!-- 	<dubbo:service interface="com.demo.inter.ProductService" protocol="hessian" path="service/product"
 		ref="productService" timeout="10000" version="1.0.2" retries="2"

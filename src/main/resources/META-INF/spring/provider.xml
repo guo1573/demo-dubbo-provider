@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
 	xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
@@ -13,26 +12,52 @@
 		ignore-unresolvable="true" location="classpath*:/dubbo.properties" />
 
 	<!-- 消费方应用名，用于计算依赖关系，不是匹配条件，不要与提供方一样 -->
-	<dubbo:application name="${dubbo.application.name}" />
+	<dubbo:application name="${dubbo.application.name}"
+		owner="${dubbo.application.owner}" />
 
-	<dubbo:registry protocol="zookeeper" address="127.0.0.1:2181" />
+	<!-- 注册中心 -->
+	<dubbo:registry protocol="${dubbo.monitor.protocol}"
+		address="${dubbo.registry.address}" />
 
-	<dubbo:protocol name="dubbo" server="netty" client="netty" 
-		port="4094" accesslog="d:/access.log"  serialization="fst"/>
-
-	<!-- <dubbo:protocol name="hessian" port="8888" /> -->
+	<!-- 监控中心 -->
+	<dubbo:monitor protocol="registry" />
 
 
-	<bean id="productService" class="com.demo.provider.ProductServiceImpl">
-	</bean>
-	
-	<dubbo:provider ></dubbo:provider>
+	<!-- name 协议名称,包括：dubbo\hassian\rmi -->
+	<!-- accepts 限制消费端连接个数 -->
+	<!-- dispatcher 是用来配置消息是否派发到线程池，对应复杂的处理建议使用线程池处理，简单处理使用直接发起新IO请求更快。all\direct\message\execution\connection -->
+	<!-- threadpool 设置线程池类型：fixed\cached\limited -->
+	<!-- threads 线程数是服务端用来处理请求的线程数量，会以第一个启动的服务配置为准 -->
+	<!-- server、client 设置远程调用方式，有：netty\mina\grizzly -->
+	<!-- serialization 设置序列号方式，dubbox的序列化方式有：hassian2\fst\kryo -->
+	<dubbo:protocol name="dubbo" server="netty" client="netty"
+		dispatcher="all" threadpool="fixed" threads="10" accepts="5" port="4095"
+		accesslog="logs/access.log" serialization="fst" />
 
-	<dubbo:service interface="com.demo.inter.ProductService" protocol="dubbo"
-		ref="productService" timeout="10000" version="1.0.5" retries="2"
-		loadbalance="random" actives="1"/>
-		
-<!-- 	<dubbo:service interface="com.demo.inter.ProductService" protocol="hessian" path="service/product"
-		ref="productService" timeout="10000" version="1.0.2" retries="2"
-		loadbalance="random" actives="2" /> -->
+
+	<!-- executes 限制服务端端每服务每方法最大并发调用数 -->
+	<!-- actives 限制消费端每服务每方法最大并发调用数 -->
+	<!-- retries 出现网络异常、超时等情况重试次数，总执行次数会加1 -->
+	<dubbo:service interface="com.demo.inter.ProductService"
+		group="cn" protocol="dubbo" ref="productService" timeout="5000"
+		version="1.0.6" retries="2" executes="5">
+	</dubbo:service>
+
+	<!-- group 服务分组实现 -->
+	<!-- delay 延迟暴露服务，在注册中心延迟暴露 -->
+	<dubbo:service delay="20000" interface="com.demo.inter.ProductService"
+		mock="com.demo.inter.ProductServiceMock" stub="com.demo.inter.ProductServiceStub"
+		group="us" protocol="dubbo" ref="productService2" timeout="5000"
+		version="1.0.6" retries="2" executes="2">
+	</dubbo:service>
+
+	<!-- 服务实现 -->
+	<bean id="productService2" class="com.demo.provider.USProductServiceImpl" />
+	<bean id="productService" class="com.demo.provider.ProductServiceImpl" />
+
+	<!--随机token令牌，使用UUID生成 -->
+	<dubbo:service interface="com.demo.inter.BaseService"
+		ref="baseServise" token="true" />
+
+	<bean id="baseServise" class="com.demo.provider.BaseServiceImpl" />
 </beans>
